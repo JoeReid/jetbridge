@@ -1,0 +1,12 @@
+type: object
+required:
+  - maxMessages
+  - maxLatency
+properties:
+  maxMessages:
+    type: integer
+    description: The maximum number of messages the lambda can be invoked with
+  maxLatency:
+    type: string
+    format: duration
+    description: The maximum amount of time to hold unprocessed messages before invoking the lambda

@@ -1,0 +1,13 @@
+type: object
+required:
+  - natsStream
+  - lambdaARN
+properties:
+  natsStream:
+    type: string
+    description: The nats stream to bind the lambda to
+  lambdaARN:
+    type: string
+    description: The Amazon Resource Name of the lambda to bind
+  batching:
+    $ref: ./BindingBatching.yaml

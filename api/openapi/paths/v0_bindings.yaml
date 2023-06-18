@@ -1,0 +1,45 @@
+post:
+  operationId: createBinding
+  summary: Create binding
+  description: Create a new binding
+  tags: 
+    - Bindings
+  requestBody: 
+    content: 
+      application/json:
+        schema:
+          $ref: ../components/schemas/CreateBinding.yaml
+  responses: 
+    '201':
+      description: Created, returned when a new binding is created
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Binding.yaml
+    '200':
+      description: OK, returned when a binding with exactly the same properties already exists
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Binding.yaml
+    '500':
+      $ref: ../components/responses/InternalServerError.yaml
+
+get: 
+  operationId: listBindings
+  summary: List bindings
+  description: Retreive the current list of bindings
+  tags: 
+    - Bindings
+  responses: 
+    '200':
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/Binding.yaml
+    '500':
+      $ref: ../components/responses/InternalServerError.yaml
+  

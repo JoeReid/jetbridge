@@ -1,0 +1,29 @@
+openapi: 3.0.0
+
+info: 
+  title: JetBridge API
+  description: Restful API for managing a JetBridge cluster
+  version: 0.1.0
+    
+servers:
+  - url: http://localhost:8000/api
+    description: Local server
+  
+tags:
+  - name: Management
+    description: Endpoints for managing the JetBridge cluster
+  - name: Bindings
+    description: Endpoints for creating and managing Jetstream/Lambda bindings
+
+security: 
+  -  {}
+
+paths:
+  /v0/peers:
+    $ref: paths/v0_peers.yaml
+  /v0/peers/{id}:
+    $ref: paths/v0_peers_{id}.yaml
+  /v0/bindings:
+    $ref: paths/v0_bindings.yaml
+  /v0/bindings/{id}:
+    $ref: paths/v0_bindings_{id}.yaml

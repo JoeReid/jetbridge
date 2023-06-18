@@ -1,0 +1,8 @@
+package: openapi
+generate:
+  - strict-server
+  - chi-server
+  - client
+  - models
+  - embedded-spec
+output: openapi.gen.go

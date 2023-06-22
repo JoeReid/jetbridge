@@ -1371,8 +1371,6 @@ func (m *Peer) validate(all bool) error {
 		}
 	}
 
-	// no validation rules for Expired
-
 	if len(errors) > 0 {
 		return PeerMultiError(errors)
 	}

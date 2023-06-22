@@ -60,7 +60,6 @@ message Peer {
   google.protobuf.Timestamp joined = 3 [(validate.rules).timestamp.required = true];
   google.protobuf.Timestamp last_seen = 4 [(validate.rules).timestamp.required = true];
   google.protobuf.Timestamp heartbeat_due = 5;
-  bool expired = 6;
 }
 
 message Binding {

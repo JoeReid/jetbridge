@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package jetbridge.v1;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/JoeReid/jetbridge/proto/gen/go/jetbridge/v1";
+
+service JetbridgeService {
+  rpc ListPeers(ListPeersRequest) returns (ListPeersResponse) {}
+
+  rpc CreateBinding(CreateBindingRequest) returns (CreateBindingResponse) {}
+  rpc GetBinding(GetBindingRequest) returns (GetBindingResponse) {}
+  rpc ListBindings(ListBindingsRequest) returns (ListBindingsResponse) {}
+  rpc DeleteBinding(DeleteBindingRequest) returns (DeleteBindingResponse) {}
+}
+
+message ListPeersRequest {}
+
+message ListPeersResponse {
+  repeated Peer peers = 1;
+}
+
+message CreateBindingRequest {
+  string stream = 1 [(validate.rules).string.min_len = 1];
+  string subject_pattern = 2 [(validate.rules).string.min_len = 1];
+  string lambda_arn = 3;
+  BindingBatching batching = 5;
+}
+
+message CreateBindingResponse {
+  Binding binding = 1;
+}
+
+message GetBindingRequest {
+  string id = 1 [(validate.rules).string.uuid = true];
+}
+
+message GetBindingResponse {
+  Binding binding = 1;
+}
+
+message ListBindingsRequest {}
+
+message ListBindingsResponse {
+  repeated Binding bindings = 1;
+}
+
+message DeleteBindingRequest {
+  string id = 1 [(validate.rules).string.uuid = true];
+}
+
+message DeleteBindingResponse {}
+
+message Peer {
+  string id = 1 [(validate.rules).string.uuid = true];
+  string hostname = 2 [(validate.rules).string.hostname = true];
+  google.protobuf.Timestamp joined = 3 [(validate.rules).timestamp.required = true];
+  google.protobuf.Timestamp last_seen = 4 [(validate.rules).timestamp.required = true];
+  google.protobuf.Timestamp heartbeat_due = 5;
+  bool expired = 6;
+}
+
+message Binding {
+  string id = 1 [(validate.rules).string.uuid = true];
+  string stream = 2 [(validate.rules).string.min_len = 1];
+  string consumer = 3 [(validate.rules).string.min_len = 1];
+  string subject_pattern = 4 [(validate.rules).string.min_len = 1];
+  string lambda_arn = 5 [(validate.rules).string.min_len = 1];
+  BindingBatching batching = 6;
+}
+
+message BindingBatching {
+  int64 max_messages = 1 [(validate.rules).int64.gte = 1];
+  google.protobuf.Duration max_latency = 3 [(validate.rules).duration.required = true];
+}

@@ -101,7 +101,7 @@ var ServeCommand = &cli.Command{
 			}))
 
 			server := &http.Server{
-				Addr:    fmt.Sprintf("localhost:%d", httpPort),
+				Addr:    fmt.Sprintf(":%d", httpPort),
 				Handler: mux,
 			}
 

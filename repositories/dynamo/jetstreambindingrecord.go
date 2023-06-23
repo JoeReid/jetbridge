@@ -14,7 +14,7 @@ type jetstreamBindingRecord struct {
 	PK                 *jetstreamBindingPK `dynamo:"pk,hash"`
 	ID                 uuid.UUID           `dynamo:"sk,range"`
 	NatsStream         string              `dynamo:"nats_stream"`
-	NatsConsumer       string              `dynamo:"nats_consumer"`
+	NatsConsumer       string              `dynamo:"nats_consumer"` // TODO: use uuid.UUID
 	NatsSubjectPattern string              `dynamo:"nats_subject_pattern"`
 	LambdaARN          string              `dynamo:"lambda_arn"`
 	Batching           *bindingBatching    `dynamo:"batching"`

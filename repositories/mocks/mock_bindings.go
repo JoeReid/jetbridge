@@ -10,6 +10,7 @@ import (
 
 	repositories "github.com/JoeReid/jetbridge/repositories"
 	gomock "github.com/golang/mock/gomock"
+	uuid "github.com/google/uuid"
 )
 
 // MockBindings is a mock of Bindings interface.
@@ -33,6 +34,50 @@ func NewMockBindings(ctrl *gomock.Controller) *MockBindings {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockBindings) EXPECT() *MockBindingsMockRecorder {
 	return m.recorder
+}
+
+// CreateJetstreamBinding mocks base method.
+func (m *MockBindings) CreateJetstreamBinding(arg0 context.Context, arg1, arg2, arg3 string, arg4 *repositories.BindingBatching) (*repositories.JetstreamBinding, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateJetstreamBinding", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(*repositories.JetstreamBinding)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateJetstreamBinding indicates an expected call of CreateJetstreamBinding.
+func (mr *MockBindingsMockRecorder) CreateJetstreamBinding(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateJetstreamBinding", reflect.TypeOf((*MockBindings)(nil).CreateJetstreamBinding), arg0, arg1, arg2, arg3, arg4)
+}
+
+// DeleteJetstreamBinding mocks base method.
+func (m *MockBindings) DeleteJetstreamBinding(arg0 context.Context, arg1 uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteJetstreamBinding", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteJetstreamBinding indicates an expected call of DeleteJetstreamBinding.
+func (mr *MockBindingsMockRecorder) DeleteJetstreamBinding(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteJetstreamBinding", reflect.TypeOf((*MockBindings)(nil).DeleteJetstreamBinding), arg0, arg1)
+}
+
+// GetJetstreamBinding mocks base method.
+func (m *MockBindings) GetJetstreamBinding(arg0 context.Context, arg1 uuid.UUID) (*repositories.JetstreamBinding, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetJetstreamBinding", arg0, arg1)
+	ret0, _ := ret[0].(*repositories.JetstreamBinding)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetJetstreamBinding indicates an expected call of GetJetstreamBinding.
+func (mr *MockBindingsMockRecorder) GetJetstreamBinding(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetJetstreamBinding", reflect.TypeOf((*MockBindings)(nil).GetJetstreamBinding), arg0, arg1)
 }
 
 // ListJetstreamBindings mocks base method.

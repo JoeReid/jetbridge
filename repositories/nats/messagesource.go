@@ -67,7 +67,7 @@ func (m *MessageSource) subscription(ctx context.Context, binding repositories.J
 	}
 
 	desiredConfig := &nats.ConsumerConfig{
-		Durable:           binding.NatsConsumer,
+		Durable:           binding.Consumer.Name,
 		Name:              "",
 		Description:       fmt.Sprintf("JetBridge Lambda consumer for %s", binding.LambdaARN),
 		DeliverPolicy:     nats.DeliverAllPolicy, // TODO: does this need exposing in the binding?
@@ -92,13 +92,13 @@ func (m *MessageSource) subscription(ctx context.Context, binding repositories.J
 	infoCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	info, err := m.js.ConsumerInfo(binding.NatsStream, binding.NatsConsumer, nats.Context(infoCtx))
+	info, err := m.js.ConsumerInfo(binding.Consumer.Stream, binding.Consumer.Name, nats.Context(infoCtx))
 	switch {
 	case errors.Is(err, nats.ErrConsumerNotFound):
 		createCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 
-		if _, err := m.js.AddConsumer(binding.NatsStream, desiredConfig, nats.Context(createCtx)); err != nil {
+		if _, err := m.js.AddConsumer(binding.Consumer.Stream, desiredConfig, nats.Context(createCtx)); err != nil {
 			return nil, fmt.Errorf("failed to create consumer: %w", err)
 		}
 
@@ -111,7 +111,7 @@ func (m *MessageSource) subscription(ctx context.Context, binding repositories.J
 		}
 	}
 
-	sub, err := m.js.PullSubscribe(binding.NatsSubjectPattern, binding.NatsConsumer, nats.Bind(binding.NatsStream, binding.NatsConsumer))
+	sub, err := m.js.PullSubscribe(binding.Consumer.Subject, binding.Consumer.Name, nats.Bind(binding.Consumer.Stream, binding.Consumer.Name))
 	if err != nil {
 		return nil, fmt.Errorf("failed to subscribe to jetstream binding: %w", err)
 	}

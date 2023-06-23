@@ -7,16 +7,20 @@ import (
 )
 
 type JetstreamBinding struct {
-	ID                 uuid.UUID
-	NatsStream         string
-	NatsConsumer       string
-	NatsSubjectPattern string
-	LambdaARN          string
-	Batching           *JetstreamBindingBatching
-	AssignedPeerID     *uuid.UUID
+	ID             uuid.UUID
+	LambdaARN      string
+	Consumer       JetstreamConsumer
+	Batching       *BindingBatching
+	AssignedPeerID *uuid.UUID
 }
 
-type JetstreamBindingBatching struct {
+type JetstreamConsumer struct {
+	Stream  string
+	Name    string
+	Subject string
+}
+
+type BindingBatching struct {
 	MaxMessages int
 	MaxLatency  time.Duration
 }

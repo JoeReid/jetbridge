@@ -296,6 +296,8 @@ func (m *CreateBindingRequest) validate(all bool) error {
 
 	var errors []error
 
+	// no validation rules for LambdaArn
+
 	if utf8.RuneCountInString(m.GetStream()) < 1 {
 		err := CreateBindingRequestValidationError{
 			field:  "Stream",
@@ -317,8 +319,6 @@ func (m *CreateBindingRequest) validate(all bool) error {
 		}
 		errors = append(errors, err)
 	}
-
-	// no validation rules for LambdaArn
 
 	if all {
 		switch v := interface{}(m.GetBatching()).(type) {
@@ -1486,21 +1486,22 @@ var _ interface {
 	ErrorName() string
 } = PeerValidationError{}
 
-// Validate checks the field values on Binding with the rules defined in the
-// proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *Binding) Validate() error {
+// Validate checks the field values on JetstreamBinding with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *JetstreamBinding) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Binding with the rules defined in the
-// proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in BindingMultiError, or nil if none found.
-func (m *Binding) ValidateAll() error {
+// ValidateAll checks the field values on JetstreamBinding with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// JetstreamBindingMultiError, or nil if none found.
+func (m *JetstreamBinding) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Binding) validate(all bool) error {
+func (m *JetstreamBinding) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -1508,7 +1509,7 @@ func (m *Binding) validate(all bool) error {
 	var errors []error
 
 	if err := m._validateUuid(m.GetId()); err != nil {
-		err = BindingValidationError{
+		err = JetstreamBindingValidationError{
 			field:  "Id",
 			reason: "value must be a valid UUID",
 			cause:  err,
@@ -1519,41 +1520,8 @@ func (m *Binding) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetStream()) < 1 {
-		err := BindingValidationError{
-			field:  "Stream",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if utf8.RuneCountInString(m.GetConsumer()) < 1 {
-		err := BindingValidationError{
-			field:  "Consumer",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if utf8.RuneCountInString(m.GetSubjectPattern()) < 1 {
-		err := BindingValidationError{
-			field:  "SubjectPattern",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
 	if utf8.RuneCountInString(m.GetLambdaArn()) < 1 {
-		err := BindingValidationError{
+		err := JetstreamBindingValidationError{
 			field:  "LambdaArn",
 			reason: "value length must be at least 1 runes",
 		}
@@ -1563,11 +1531,51 @@ func (m *Binding) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if m.GetConsumer() == nil {
+		err := JetstreamBindingValidationError{
+			field:  "Consumer",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetConsumer()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, JetstreamBindingValidationError{
+					field:  "Consumer",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, JetstreamBindingValidationError{
+					field:  "Consumer",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetConsumer()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return JetstreamBindingValidationError{
+				field:  "Consumer",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if all {
 		switch v := interface{}(m.GetBatching()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, BindingValidationError{
+				errors = append(errors, JetstreamBindingValidationError{
 					field:  "Batching",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1575,7 +1583,7 @@ func (m *Binding) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, BindingValidationError{
+				errors = append(errors, JetstreamBindingValidationError{
 					field:  "Batching",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1584,7 +1592,7 @@ func (m *Binding) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetBatching()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return BindingValidationError{
+			return JetstreamBindingValidationError{
 				field:  "Batching",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -1593,13 +1601,13 @@ func (m *Binding) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return BindingMultiError(errors)
+		return JetstreamBindingMultiError(errors)
 	}
 
 	return nil
 }
 
-func (m *Binding) _validateUuid(uuid string) error {
+func (m *JetstreamBinding) _validateUuid(uuid string) error {
 	if matched := _v_1_uuidPattern.MatchString(uuid); !matched {
 		return errors.New("invalid uuid format")
 	}
@@ -1607,12 +1615,13 @@ func (m *Binding) _validateUuid(uuid string) error {
 	return nil
 }
 
-// BindingMultiError is an error wrapping multiple validation errors returned
-// by Binding.ValidateAll() if the designated constraints aren't met.
-type BindingMultiError []error
+// JetstreamBindingMultiError is an error wrapping multiple validation errors
+// returned by JetstreamBinding.ValidateAll() if the designated constraints
+// aren't met.
+type JetstreamBindingMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m BindingMultiError) Error() string {
+func (m JetstreamBindingMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -1621,11 +1630,11 @@ func (m BindingMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m BindingMultiError) AllErrors() []error { return m }
+func (m JetstreamBindingMultiError) AllErrors() []error { return m }
 
-// BindingValidationError is the validation error returned by Binding.Validate
-// if the designated constraints aren't met.
-type BindingValidationError struct {
+// JetstreamBindingValidationError is the validation error returned by
+// JetstreamBinding.Validate if the designated constraints aren't met.
+type JetstreamBindingValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1633,22 +1642,22 @@ type BindingValidationError struct {
 }
 
 // Field function returns field value.
-func (e BindingValidationError) Field() string { return e.field }
+func (e JetstreamBindingValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e BindingValidationError) Reason() string { return e.reason }
+func (e JetstreamBindingValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e BindingValidationError) Cause() error { return e.cause }
+func (e JetstreamBindingValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e BindingValidationError) Key() bool { return e.key }
+func (e JetstreamBindingValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e BindingValidationError) ErrorName() string { return "BindingValidationError" }
+func (e JetstreamBindingValidationError) ErrorName() string { return "JetstreamBindingValidationError" }
 
 // Error satisfies the builtin error interface
-func (e BindingValidationError) Error() string {
+func (e JetstreamBindingValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1660,14 +1669,14 @@ func (e BindingValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sBinding.%s: %s%s",
+		"invalid %sJetstreamBinding.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = BindingValidationError{}
+var _ error = JetstreamBindingValidationError{}
 
 var _ interface {
 	Field() string
@@ -1675,7 +1684,142 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = BindingValidationError{}
+} = JetstreamBindingValidationError{}
+
+// Validate checks the field values on JetstreamConsumer with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *JetstreamConsumer) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on JetstreamConsumer with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// JetstreamConsumerMultiError, or nil if none found.
+func (m *JetstreamConsumer) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *JetstreamConsumer) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetStream()) < 1 {
+		err := JetstreamConsumerValidationError{
+			field:  "Stream",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetName()) < 1 {
+		err := JetstreamConsumerValidationError{
+			field:  "Name",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetSubject()) < 1 {
+		err := JetstreamConsumerValidationError{
+			field:  "Subject",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return JetstreamConsumerMultiError(errors)
+	}
+
+	return nil
+}
+
+// JetstreamConsumerMultiError is an error wrapping multiple validation errors
+// returned by JetstreamConsumer.ValidateAll() if the designated constraints
+// aren't met.
+type JetstreamConsumerMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m JetstreamConsumerMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m JetstreamConsumerMultiError) AllErrors() []error { return m }
+
+// JetstreamConsumerValidationError is the validation error returned by
+// JetstreamConsumer.Validate if the designated constraints aren't met.
+type JetstreamConsumerValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e JetstreamConsumerValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e JetstreamConsumerValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e JetstreamConsumerValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e JetstreamConsumerValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e JetstreamConsumerValidationError) ErrorName() string {
+	return "JetstreamConsumerValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e JetstreamConsumerValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sJetstreamConsumer.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = JetstreamConsumerValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = JetstreamConsumerValidationError{}
 
 // Validate checks the field values on BindingBatching with the rules defined
 // in the proto definition for this message. If any rules are violated, the

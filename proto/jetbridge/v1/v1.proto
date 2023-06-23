@@ -24,14 +24,14 @@ message ListPeersResponse {
 }
 
 message CreateBindingRequest {
-  string stream = 1 [(validate.rules).string.min_len = 1];
-  string subject_pattern = 2 [(validate.rules).string.min_len = 1];
-  string lambda_arn = 3;
-  BindingBatching batching = 5;
+  string lambda_arn = 1;
+  string stream = 2 [(validate.rules).string.min_len = 1];
+  string subject_pattern = 3 [(validate.rules).string.min_len = 1];
+  BindingBatching batching = 4;
 }
 
 message CreateBindingResponse {
-  Binding binding = 1;
+  JetstreamBinding binding = 1;
 }
 
 message GetBindingRequest {
@@ -39,13 +39,13 @@ message GetBindingRequest {
 }
 
 message GetBindingResponse {
-  Binding binding = 1;
+  JetstreamBinding binding = 1;
 }
 
 message ListBindingsRequest {}
 
 message ListBindingsResponse {
-  repeated Binding bindings = 1;
+  repeated JetstreamBinding bindings = 1;
 }
 
 message DeleteBindingRequest {
@@ -62,13 +62,17 @@ message Peer {
   google.protobuf.Timestamp heartbeat_due = 5;
 }
 
-message Binding {
+message JetstreamBinding {
   string id = 1 [(validate.rules).string.uuid = true];
-  string stream = 2 [(validate.rules).string.min_len = 1];
-  string consumer = 3 [(validate.rules).string.min_len = 1];
-  string subject_pattern = 4 [(validate.rules).string.min_len = 1];
-  string lambda_arn = 5 [(validate.rules).string.min_len = 1];
+  string lambda_arn = 2 [(validate.rules).string.min_len = 1];
+  JetstreamConsumer consumer = 3 [(validate.rules).message.required = true];
   BindingBatching batching = 6;
+}
+
+message JetstreamConsumer {
+  string stream = 1 [(validate.rules).string.min_len = 1];
+  string name = 2 [(validate.rules).string.min_len = 1];
+  string subject = 3 [(validate.rules).string.min_len = 1];
 }
 
 message BindingBatching {

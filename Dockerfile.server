@@ -1,9 +1,11 @@
 FROM golang:latest AS builder
-
 WORKDIR /app
-
 ADD . .
 RUN go mod download
 RUN go build -o main ./cmd/server/main.go
 
+FROM gcr.io/distroless/static-debian11:latest
+FROM debian:latest
+WORKDIR /app
+COPY --from=builder /app/main /app/main
 ENTRYPOINT [ "/app/main" ]

@@ -23,12 +23,14 @@ func TestJetstreamWorker(t *testing.T) {
 	bindings := mocks.NewMockBindings(ctrl)
 	bindings.EXPECT().ListJetstreamBindings(gomock.Any()).Return([]repositories.JetstreamBinding{
 		{
-			ID:                 uuid.New(),
-			NatsStream:         "test-stream",
-			NatsConsumer:       "test-consumer",
-			NatsSubjectPattern: "test-stream.*",
-			LambdaARN:          "test-arn",
-			Batching: &repositories.JetstreamBindingBatching{
+			ID:        uuid.New(),
+			LambdaARN: "test-arn",
+			Consumer: repositories.JetstreamConsumer{
+				Stream:  "test-stream",
+				Name:    "test-consumer",
+				Subject: "test-stream.*",
+			},
+			Batching: &repositories.BindingBatching{
 				MaxMessages: 10,
 				MaxLatency:  time.Second,
 			},

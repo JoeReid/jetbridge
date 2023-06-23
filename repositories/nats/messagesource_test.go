@@ -45,12 +45,14 @@ func TestMessageSource_FetchJetstreamMessages(t *testing.T) {
 
 	t.Run("consumer not exist", func(t *testing.T) {
 		msgs, err := candidate.FetchJetstreamMessages(context.TODO(), repositories.JetstreamBinding{
-			ID:                 id,
-			NatsStream:         "TESTSTREAM",
-			NatsConsumer:       id.String(),
-			NatsSubjectPattern: "TESTSTREAM.*",
-			LambdaARN:          "test-arn",
-			Batching: &repositories.JetstreamBindingBatching{
+			ID:        id,
+			LambdaARN: "test-arn",
+			Consumer: repositories.JetstreamConsumer{
+				Stream:  "TESTSTREAM",
+				Name:    id.String(),
+				Subject: "TESTSTREAM.*",
+			},
+			Batching: &repositories.BindingBatching{
 				MaxMessages: 2,
 				MaxLatency:  time.Second,
 			},
@@ -65,12 +67,14 @@ func TestMessageSource_FetchJetstreamMessages(t *testing.T) {
 
 	t.Run("consumer exists", func(t *testing.T) {
 		msgs, err := candidate.FetchJetstreamMessages(context.TODO(), repositories.JetstreamBinding{
-			ID:                 id,
-			NatsStream:         "TESTSTREAM",
-			NatsConsumer:       id.String(),
-			NatsSubjectPattern: "TESTSTREAM.*",
-			LambdaARN:          "test-arn",
-			Batching: &repositories.JetstreamBindingBatching{
+			ID:        id,
+			LambdaARN: "test-arn",
+			Consumer: repositories.JetstreamConsumer{
+				Stream:  "TESTSTREAM",
+				Name:    id.String(),
+				Subject: "TESTSTREAM.*",
+			},
+			Batching: &repositories.BindingBatching{
 				MaxMessages: 2,
 				MaxLatency:  time.Second,
 			},

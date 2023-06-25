@@ -20,5 +20,5 @@ jobs:
       - name: Build Image
         run: |
           docker build -f Dockerfile.server . --tag ghcr.io/joereid/jetbridge:main
-          docker push ghcr.io/JoeReid/jetbridge:main
+          docker push ghcr.io/joereid/jetbridge:main
 

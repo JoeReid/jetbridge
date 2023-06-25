@@ -1,0 +1,24 @@
+name: Publish Containers
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  push_to_registry:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the rep
+        uses: action/checkout@v3
+      - name: Login to the GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{github.action}}
+          password: ${{secrets.GITHUB_TOKEN}}
+      - name: Build Image
+        run: |
+          docker build -f Docekrfile.server . --tag ghcr.io/JoeReid/jetbridge:main
+          docker push ghcr.io/JoeReid/jetbridge:main
+

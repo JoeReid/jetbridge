@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the rep
-        uses: action/checkout@v3
+        uses: actions/checkout@v3
       - name: Login to the GitHub Container Registry
         uses: docker/login-action@v1
         with:

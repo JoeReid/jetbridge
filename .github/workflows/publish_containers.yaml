@@ -19,6 +19,6 @@ jobs:
           password: ${{secrets.GITHUB_TOKEN}}
       - name: Build Image
         run: |
-          docker build -f Docekrfile.server . --tag ghcr.io/JoeReid/jetbridge:main
+          docker build -f Docekrfile.server . --tag ghcr.io/joereid/jetbridge:main
           docker push ghcr.io/JoeReid/jetbridge:main
 

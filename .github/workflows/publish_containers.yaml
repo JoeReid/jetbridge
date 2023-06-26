@@ -8,6 +8,8 @@ on:
 jobs:
   push_to_registry:
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     steps:
       - name: Check out the rep
         uses: actions/checkout@v3
@@ -21,4 +23,3 @@ jobs:
         run: |
           docker build -f Dockerfile.server . --tag ghcr.io/joereid/jetbridge:main
           docker push ghcr.io/joereid/jetbridge:main
-

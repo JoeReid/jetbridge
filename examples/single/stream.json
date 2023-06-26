@@ -1,0 +1,33 @@
+{
+  "config": {
+    "name": "MESSAGES",
+    "subjects": [
+      "MESSAGES.sent"
+    ],
+    "retention": "limits",
+    "max_consumers": -1,
+    "max_msgs_per_subject": -1,
+    "max_msgs": -1,
+    "max_bytes": -1,
+    "max_age": 0,
+    "max_msg_size": -1,
+    "storage": "file",
+    "discard": "new",
+    "num_replicas": 1,
+    "duplicate_window": 120000000000,
+    "sealed": false,
+    "deny_delete": false,
+    "deny_purge": false,
+    "allow_rollup_hdrs": false
+  },
+  "created": "2023-06-25T21:47:06.9440264Z",
+  "state": {
+    "messages": 0,
+    "bytes": 0,
+    "first_seq": 0,
+    "first_ts": "0001-01-01T00:00:00Z",
+    "last_seq": 0,
+    "last_ts": "0001-01-01T00:00:00Z",
+    "consumer_count": 0
+  }
+}

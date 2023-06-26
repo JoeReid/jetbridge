@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/JoeReid/go-rendezvous v0.0.0-20230315123642-7fbd4a2555e0
+	github.com/aws/aws-lambda-go v1.41.0
 	github.com/aws/aws-sdk-go v1.44.223
 	github.com/bufbuild/connect-go v1.8.0
 	github.com/envoyproxy/protoc-gen-validate v1.0.1

@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/bufbuild/connect-go"
 	"github.com/google/uuid"
 	"github.com/guregu/dynamo"
 	"github.com/nats-io/nats.go"
@@ -98,7 +99,7 @@ var ServeCommand = &cli.Command{
 			mux.Handle(v1connect.NewJetbridgeServiceHandler(&server.V1{
 				Bindings: bindings,
 				Peers:    peers,
-			}))
+			}, connect.WithInterceptors(connect.UnaryInterceptorFunc(server.LoggingInterceptor))))
 
 			server := &http.Server{
 				Addr:    fmt.Sprintf(":%d", httpPort),

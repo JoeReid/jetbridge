@@ -79,7 +79,7 @@ func (v *V1) CreateBinding(ctx context.Context, req *connect.Request[v1.CreateBi
 		Batching: nil,
 	}
 
-	if binding.Batching == nil {
+	if binding.Batching != nil {
 		v1Binding.Batching = &v1.BindingBatching{
 			MaxMessages: int64(binding.Batching.MaxMessages),
 			MaxLatency:  durationpb.New(binding.Batching.MaxLatency),

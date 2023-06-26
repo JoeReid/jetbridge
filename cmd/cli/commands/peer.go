@@ -5,11 +5,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/JoeReid/jetbridge/cmd/cli/prettyprint"
 	v1 "github.com/JoeReid/jetbridge/proto/gen/go/jetbridge/v1"
 	"github.com/JoeReid/jetbridge/proto/gen/go/jetbridge/v1/v1connect"
 	"github.com/bufbuild/connect-go"
-	"github.com/fatih/color"
-	"github.com/rodaine/table"
 	"github.com/urfave/cli/v2"
 )
 
@@ -37,15 +36,7 @@ var PeerList = &cli.Command{
 			return err
 		}
 
-		tbl := table.New("ID", "Hostname", "Joined At", "Last Seen", "Heartbeat Due By")
-		tbl.WithHeaderFormatter(color.New(color.FgGreen, color.Underline).SprintfFunc())
-		tbl.WithFirstColumnFormatter(color.New(color.FgYellow).SprintfFunc())
-
-		for _, peer := range resp.Msg.Peers {
-			tbl.AddRow(peer.Id, peer.Hostname, peer.Joined.AsTime(), peer.LastSeen.AsTime(), peer.HeartbeatDue.AsTime())
-		}
-
-		tbl.Print()
+		prettyprint.Peers(resp.Msg.Peers)
 		return nil
 	},
 }

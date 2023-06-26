@@ -12,5 +12,6 @@ var Root = &cli.App{
 	},
 	Commands: []*cli.Command{
 		Peer,
+		Binding,
 	},
 }

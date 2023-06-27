@@ -5,28 +5,23 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/JoeReid/jetbridge"
 	"github.com/JoeReid/jetbridge/repositories"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
+	"go.uber.org/zap"
 )
 
 var _ repositories.MessageHandler = (*MessageHandler)(nil)
 
-func NewMessageHandler(lambda lambdaiface.LambdaAPI) *MessageHandler {
-	return &MessageHandler{
-		lambda: lambda,
-	}
-}
-
 type MessageHandler struct {
+	logger *zap.Logger
 	lambda lambdaiface.LambdaAPI
 }
 
 func (m *MessageHandler) HandleJetstreamMessages(ctx context.Context, binding repositories.JetstreamBinding, messages []repositories.JetstreamMessage) error {
-	if binding.Batching != nil {
+	if binding.MaxMessages > 0 && binding.MaxLatency > 0 {
 		var batch jetbridge.JetstreamBatchedLambdaPayload
 		for _, message := range messages {
 			batch = append(batch, message.Payload())
@@ -36,7 +31,7 @@ func (m *MessageHandler) HandleJetstreamMessages(ctx context.Context, binding re
 		if err != nil {
 			for _, message := range messages {
 				if err := message.Nak(); err != nil {
-					log.Printf("failed to NAK message: %v", err)
+					m.logger.Error("failed to NAK message", zap.Error(err))
 				}
 			}
 
@@ -46,7 +41,7 @@ func (m *MessageHandler) HandleJetstreamMessages(ctx context.Context, binding re
 		if err := m.run(ctx, binding, payload); err != nil {
 			for _, message := range messages {
 				if err := message.Nak(); err != nil {
-					log.Printf("failed to NAK message: %v", err)
+					m.logger.Error("failed to NAK message", zap.Error(err))
 				}
 			}
 
@@ -60,7 +55,7 @@ func (m *MessageHandler) HandleJetstreamMessages(ctx context.Context, binding re
 	for _, message := range messages {
 		if rtnErr != nil {
 			if err := message.Nak(); err != nil {
-				log.Printf("failed to NAK message: %v", err)
+				m.logger.Error("failed to NAK message", zap.Error(err))
 			}
 			continue
 		}
@@ -70,7 +65,7 @@ func (m *MessageHandler) HandleJetstreamMessages(ctx context.Context, binding re
 			rtnErr = fmt.Errorf("failed to marshal message: %w", err)
 
 			if err := message.Nak(); err != nil {
-				log.Printf("failed to NAK message: %v", err)
+				m.logger.Error("failed to NAK message", zap.Error(err))
 			}
 
 			continue
@@ -80,7 +75,7 @@ func (m *MessageHandler) HandleJetstreamMessages(ctx context.Context, binding re
 			rtnErr = fmt.Errorf("failed to run lambda: %w", err)
 
 			if err := message.Nak(); err != nil {
-				log.Printf("failed to NAK message: %v", err)
+				m.logger.Error("failed to NAK message", zap.Error(err))
 			}
 
 			continue
@@ -100,10 +95,35 @@ func (m *MessageHandler) run(ctx context.Context, binding repositories.Jetstream
 	}
 
 	if out.FunctionError != nil {
+		var logs string
+		if out.LogResult != nil {
+			logs = *out.LogResult
+		}
+
+		m.logger.Debug(
+			"lambda returned error",
+			zap.String("function_name", binding.LambdaARN),
+			zap.String("function_version", *out.ExecutedVersion),
+			zap.String("error", *out.FunctionError),
+			zap.String("logs", logs),
+		)
 		return errors.New(*out.FunctionError)
 	}
 
-	log.Println("lambda invoked successfully", "function_name", binding.LambdaARN, "function_version", *out.ExecutedVersion)
+	m.logger.Info("lambda invoked successfully", zap.String("function_name", binding.LambdaARN), zap.String("function_version", *out.ExecutedVersion))
 
 	return nil
+}
+
+func NewMessageHandler(lambda lambdaiface.LambdaAPI) (*MessageHandler, error) {
+	zl, err := zap.NewDevelopment() // TODO: this needs to be managed better
+	if err != nil {
+		return nil, err
+	}
+	zl.With(zap.String("component", "lambda"))
+
+	return &MessageHandler{
+		logger: zl,
+		lambda: lambda,
+	}, nil
 }

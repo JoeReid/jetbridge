@@ -320,12 +320,14 @@ func (m *CreateBindingRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	// no validation rules for MaxBatchSize
+
 	if all {
-		switch v := interface{}(m.GetBatching()).(type) {
+		switch v := interface{}(m.GetMaxBatchLatency()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, CreateBindingRequestValidationError{
-					field:  "Batching",
+					field:  "MaxBatchLatency",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -333,20 +335,90 @@ func (m *CreateBindingRequest) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, CreateBindingRequestValidationError{
-					field:  "Batching",
+					field:  "MaxBatchLatency",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetBatching()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetMaxBatchLatency()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return CreateBindingRequestValidationError{
-				field:  "Batching",
+				field:  "MaxBatchLatency",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
 		}
+	}
+
+	switch v := m.DeliveryPolicy.(type) {
+	case *CreateBindingRequest_Policy:
+		if v == nil {
+			err := CreateBindingRequestValidationError{
+				field:  "DeliveryPolicy",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		// no validation rules for Policy
+	case *CreateBindingRequest_StartTime:
+		if v == nil {
+			err := CreateBindingRequestValidationError{
+				field:  "DeliveryPolicy",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if all {
+			switch v := interface{}(m.GetStartTime()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, CreateBindingRequestValidationError{
+						field:  "StartTime",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, CreateBindingRequestValidationError{
+						field:  "StartTime",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetStartTime()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return CreateBindingRequestValidationError{
+					field:  "StartTime",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *CreateBindingRequest_StartSequence:
+		if v == nil {
+			err := CreateBindingRequestValidationError{
+				field:  "DeliveryPolicy",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		// no validation rules for StartSequence
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {
@@ -1531,10 +1603,10 @@ func (m *JetstreamBinding) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if m.GetConsumer() == nil {
+	if utf8.RuneCountInString(m.GetStream()) < 1 {
 		err := JetstreamBindingValidationError{
-			field:  "Consumer",
-			reason: "value is required",
+			field:  "Stream",
+			reason: "value length must be at least 1 runes",
 		}
 		if !all {
 			return err
@@ -1542,12 +1614,36 @@ func (m *JetstreamBinding) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if utf8.RuneCountInString(m.GetConsumerName()) < 1 {
+		err := JetstreamBindingValidationError{
+			field:  "ConsumerName",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetSubjectPattern()) < 1 {
+		err := JetstreamBindingValidationError{
+			field:  "SubjectPattern",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for MaxBatchSize
+
 	if all {
-		switch v := interface{}(m.GetConsumer()).(type) {
+		switch v := interface{}(m.GetMaxBatchLatency()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, JetstreamBindingValidationError{
-					field:  "Consumer",
+					field:  "MaxBatchLatency",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -1555,49 +1651,106 @@ func (m *JetstreamBinding) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, JetstreamBindingValidationError{
-					field:  "Consumer",
+					field:  "MaxBatchLatency",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetConsumer()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetMaxBatchLatency()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return JetstreamBindingValidationError{
-				field:  "Consumer",
+				field:  "MaxBatchLatency",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
 		}
 	}
 
-	if all {
-		switch v := interface{}(m.GetBatching()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, JetstreamBindingValidationError{
-					field:  "Batching",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, JetstreamBindingValidationError{
-					field:  "Batching",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetBatching()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return JetstreamBindingValidationError{
-				field:  "Batching",
-				reason: "embedded message failed validation",
+	if m.GetAssignedPeer() != "" {
+
+		if err := m._validateUuid(m.GetAssignedPeer()); err != nil {
+			err = JetstreamBindingValidationError{
+				field:  "AssignedPeer",
+				reason: "value must be a valid UUID",
 				cause:  err,
 			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
+
+	}
+
+	switch v := m.DeliveryPolicy.(type) {
+	case *JetstreamBinding_Policy:
+		if v == nil {
+			err := JetstreamBindingValidationError{
+				field:  "DeliveryPolicy",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		// no validation rules for Policy
+	case *JetstreamBinding_StartTime:
+		if v == nil {
+			err := JetstreamBindingValidationError{
+				field:  "DeliveryPolicy",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if all {
+			switch v := interface{}(m.GetStartTime()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, JetstreamBindingValidationError{
+						field:  "StartTime",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, JetstreamBindingValidationError{
+						field:  "StartTime",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetStartTime()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return JetstreamBindingValidationError{
+					field:  "StartTime",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *JetstreamBinding_StartSequence:
+		if v == nil {
+			err := JetstreamBindingValidationError{
+				field:  "DeliveryPolicy",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		// no validation rules for StartSequence
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {
@@ -1685,260 +1838,3 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = JetstreamBindingValidationError{}
-
-// Validate checks the field values on JetstreamConsumer with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *JetstreamConsumer) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on JetstreamConsumer with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// JetstreamConsumerMultiError, or nil if none found.
-func (m *JetstreamConsumer) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *JetstreamConsumer) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if utf8.RuneCountInString(m.GetStream()) < 1 {
-		err := JetstreamConsumerValidationError{
-			field:  "Stream",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if utf8.RuneCountInString(m.GetName()) < 1 {
-		err := JetstreamConsumerValidationError{
-			field:  "Name",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if utf8.RuneCountInString(m.GetSubject()) < 1 {
-		err := JetstreamConsumerValidationError{
-			field:  "Subject",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(errors) > 0 {
-		return JetstreamConsumerMultiError(errors)
-	}
-
-	return nil
-}
-
-// JetstreamConsumerMultiError is an error wrapping multiple validation errors
-// returned by JetstreamConsumer.ValidateAll() if the designated constraints
-// aren't met.
-type JetstreamConsumerMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m JetstreamConsumerMultiError) Error() string {
-	var msgs []string
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m JetstreamConsumerMultiError) AllErrors() []error { return m }
-
-// JetstreamConsumerValidationError is the validation error returned by
-// JetstreamConsumer.Validate if the designated constraints aren't met.
-type JetstreamConsumerValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e JetstreamConsumerValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e JetstreamConsumerValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e JetstreamConsumerValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e JetstreamConsumerValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e JetstreamConsumerValidationError) ErrorName() string {
-	return "JetstreamConsumerValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e JetstreamConsumerValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sJetstreamConsumer.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = JetstreamConsumerValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = JetstreamConsumerValidationError{}
-
-// Validate checks the field values on BindingBatching with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *BindingBatching) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on BindingBatching with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// BindingBatchingMultiError, or nil if none found.
-func (m *BindingBatching) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *BindingBatching) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if m.GetMaxMessages() < 1 {
-		err := BindingBatchingValidationError{
-			field:  "MaxMessages",
-			reason: "value must be greater than or equal to 1",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if m.GetMaxLatency() == nil {
-		err := BindingBatchingValidationError{
-			field:  "MaxLatency",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(errors) > 0 {
-		return BindingBatchingMultiError(errors)
-	}
-
-	return nil
-}
-
-// BindingBatchingMultiError is an error wrapping multiple validation errors
-// returned by BindingBatching.ValidateAll() if the designated constraints
-// aren't met.
-type BindingBatchingMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m BindingBatchingMultiError) Error() string {
-	var msgs []string
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m BindingBatchingMultiError) AllErrors() []error { return m }
-
-// BindingBatchingValidationError is the validation error returned by
-// BindingBatching.Validate if the designated constraints aren't met.
-type BindingBatchingValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e BindingBatchingValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e BindingBatchingValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e BindingBatchingValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e BindingBatchingValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e BindingBatchingValidationError) ErrorName() string { return "BindingBatchingValidationError" }
-
-// Error satisfies the builtin error interface
-func (e BindingBatchingValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sBindingBatching.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = BindingBatchingValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = BindingBatchingValidationError{}

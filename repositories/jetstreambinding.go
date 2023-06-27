@@ -9,18 +9,20 @@ import (
 type JetstreamBinding struct {
 	ID             uuid.UUID
 	LambdaARN      string
-	Consumer       JetstreamConsumer
-	Batching       *BindingBatching
+	Stream         string
+	Consumer       uuid.UUID
+	Subject        string
+	MaxMessages    int
+	MaxLatency     time.Duration
+	DeliveryPolicy string
 	AssignedPeerID *uuid.UUID
 }
 
-type JetstreamConsumer struct {
-	Stream  string
-	Name    string
-	Subject string
-}
-
-type BindingBatching struct {
-	MaxMessages int
-	MaxLatency  time.Duration
+type CreateJetstreamBinding struct {
+	LambdaARN      string
+	Stream         string
+	Subject        string
+	MaxMessages    int
+	MaxLatency     time.Duration
+	DeliveryPolicy string
 }

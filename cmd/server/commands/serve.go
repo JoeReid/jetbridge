@@ -122,12 +122,22 @@ var ServeCommand = &cli.Command{
 			membership, ctx := daemons.NewPeerMembership(ctx, peers)
 
 			membership.Go(func(peerID uuid.UUID) error {
-				return (&daemons.JetstreamWorker{
-					Bindings:       bindings,
-					Messages:       natsrepo.NewMessageSource(js),
-					Handler:        lambdarepo.NewMessageHandler(lambdaSvc),
-					UpdateInterval: time.Second * 5,
-				}).Run(ctx, peerID)
+				source, err := natsrepo.NewMessageSource(js)
+				if err != nil {
+					return err
+				}
+
+				handler, err := lambdarepo.NewMessageHandler(lambdaSvc)
+				if err != nil {
+					return err
+				}
+
+				jsw, err := daemons.NewJetstreamWorker(bindings, source, handler)
+				if err != nil {
+					return err
+				}
+
+				return jsw.Run(ctx, peerID)
 			})
 
 			return membership.Wait()

@@ -12,20 +12,28 @@ import (
 	"github.com/JoeReid/jetbridge"
 	"github.com/JoeReid/jetbridge/repositories"
 	"github.com/nats-io/nats.go"
+	"go.uber.org/zap"
 )
 
 var _ repositories.MessageSource = (*MessageSource)(nil)
 
-func NewMessageSource(js nats.JetStreamContext) *MessageSource {
+func NewMessageSource(js nats.JetStreamContext) (*MessageSource, error) {
+	zl, err := zap.NewDevelopment() // TODO: this needs to be managed better
+	if err != nil {
+		return nil, err
+	}
+
 	return &MessageSource{
+		logger:        zl,
 		js:            js,
 		mu:            &sync.Mutex{},
 		subscriptions: make(map[string]*nats.Subscription),
-	}
+	}, nil
 }
 
 type MessageSource struct {
-	js nats.JetStreamContext
+	logger *zap.Logger
+	js     nats.JetStreamContext
 
 	mu            *sync.Mutex
 	subscriptions map[string]*nats.Subscription
@@ -37,9 +45,9 @@ func (m *MessageSource) FetchJetstreamMessages(ctx context.Context, binding repo
 		batchLatency = 30 * time.Second
 	)
 
-	if binding.Batching != nil {
-		batchSize = binding.Batching.MaxMessages
-		batchLatency = binding.Batching.MaxLatency
+	if binding.MaxMessages > 0 && binding.MaxLatency > 0 {
+		batchSize = binding.MaxMessages
+		batchLatency = binding.MaxLatency
 	}
 
 	sub, err := m.subscription(ctx, binding)
@@ -67,7 +75,7 @@ func (m *MessageSource) subscription(ctx context.Context, binding repositories.J
 	}
 
 	desiredConfig := &nats.ConsumerConfig{
-		Durable:           binding.Consumer.Name,
+		Durable:           binding.Consumer.String(),
 		Name:              "",
 		Description:       fmt.Sprintf("JetBridge Lambda consumer for %s", binding.LambdaARN),
 		DeliverPolicy:     nats.DeliverAllPolicy, // TODO: does this need exposing in the binding?
@@ -83,22 +91,22 @@ func (m *MessageSource) subscription(ctx context.Context, binding repositories.J
 		MaxRequestExpires: time.Minute,
 	}
 
-	if binding.Batching != nil {
-		desiredConfig.MaxAckPending = binding.Batching.MaxMessages
-		desiredConfig.MaxRequestBatch = binding.Batching.MaxMessages
-		desiredConfig.MaxRequestExpires = binding.Batching.MaxLatency
+	if binding.MaxMessages > 0 && binding.MaxLatency > 0 {
+		desiredConfig.MaxAckPending = binding.MaxMessages
+		desiredConfig.MaxRequestBatch = binding.MaxMessages
+		desiredConfig.MaxRequestExpires = binding.MaxLatency
 	}
 
 	infoCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	info, err := m.js.ConsumerInfo(binding.Consumer.Stream, binding.Consumer.Name, nats.Context(infoCtx))
+	info, err := m.js.ConsumerInfo(binding.Stream, binding.Consumer.String(), nats.Context(infoCtx))
 	switch {
 	case errors.Is(err, nats.ErrConsumerNotFound):
 		createCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 
-		if _, err := m.js.AddConsumer(binding.Consumer.Stream, desiredConfig, nats.Context(createCtx)); err != nil {
+		if _, err := m.js.AddConsumer(binding.Stream, desiredConfig, nats.Context(createCtx)); err != nil {
 			return nil, fmt.Errorf("failed to create consumer: %w", err)
 		}
 
@@ -111,7 +119,7 @@ func (m *MessageSource) subscription(ctx context.Context, binding repositories.J
 		}
 	}
 
-	sub, err := m.js.PullSubscribe(binding.Consumer.Subject, binding.Consumer.Name, nats.Bind(binding.Consumer.Stream, binding.Consumer.Name))
+	sub, err := m.js.PullSubscribe(binding.Subject, binding.Consumer.String(), nats.Bind(binding.Stream, binding.Consumer.String()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to subscribe to jetstream binding: %w", err)
 	}

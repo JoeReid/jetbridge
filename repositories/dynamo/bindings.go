@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/JoeReid/go-rendezvous"
 	"github.com/JoeReid/jetbridge/repositories"
 	"github.com/google/uuid"
 	"github.com/guregu/dynamo"
-	"golang.org/x/sync/errgroup"
 )
 
 var _ repositories.Bindings = (*Bindings)(nil)
@@ -19,242 +17,71 @@ type Bindings struct {
 	tableName string
 }
 
-func (b *Bindings) CreateJetstreamBinding(ctx context.Context, lambdaARN, stream, subject string, batching *repositories.BindingBatching) (*repositories.JetstreamBinding, error) {
-	eg, ctx := errgroup.WithContext(ctx)
-
-	var (
-		peerIDs    []string
-		newBinding *jetstreamBindingRecord
-	)
-
-	eg.Go(func() error {
-		query := b.db.Table(b.tableName).
-			Get("pk", &peerPK{})
-
-		var peers []peerRecord
-		if err := query.AllWithContext(ctx, &peers); err != nil {
-			return err
-		}
-
-		for _, peer := range peers {
-			peerIDs = append(peerIDs, peer.ID.String())
-		}
-		return nil
-	})
-
-	eg.Go(func() error {
-		var batch *bindingBatching
-
-		if batching != nil {
-			batch = &bindingBatching{
-				MaxMessages: batching.MaxMessages,
-				MaxLatency:  batching.MaxLatency,
-			}
-		}
-
-		id := uuid.New()
-
-		newBinding = &jetstreamBindingRecord{
-			PK:                 &jetstreamBindingPK{},
-			ID:                 id,
-			LambdaARN:          lambdaARN,
-			NatsStream:         stream,
-			NatsConsumer:       id.String(),
-			NatsSubjectPattern: subject,
-			Batching:           batch,
-		}
-
-		query := b.db.Table(b.tableName).
-			Put(newBinding).
-			If("attribute_not_exists(pk)")
-
-		if err := query.RunWithContext(ctx); err != nil {
-			return fmt.Errorf("failed to create jetstream binding: %w", err)
-		}
-		return nil
-	})
-
-	if err := eg.Wait(); err != nil {
+func (b *Bindings) CreateJetstreamBinding(ctx context.Context, create *repositories.CreateJetstreamBinding) (*repositories.JetstreamBinding, error) {
+	record, err := newJetstreamBinding(create)
+	if err != nil {
 		return nil, err
 	}
 
-	// Determine the assigned peer using rendezvous hashing
-	var assignedPeerID *uuid.UUID
-	if len(peerIDs) > 0 {
-		h := rendezvous.NewHasher(rendezvous.WithMembers(peerIDs...))
+	createQuery := b.db.Table(b.tableName).
+		Put(record).
+		If("attribute_not_exists(pk)")
 
-		owner, err := uuid.Parse(h.Owner(newBinding.ID.String()))
-		if err != nil {
-			return nil, err
-		}
-		assignedPeerID = &owner
+	peerQuery := b.db.Table(b.tableName).
+		Get("pk", &peerPK{})
+
+	if err := createQuery.RunWithContext(ctx); err != nil {
+		return nil, fmt.Errorf("failed to create jetstream binding: %w", err)
 	}
 
-	resp := &repositories.JetstreamBinding{
-		ID:        newBinding.ID,
-		LambdaARN: newBinding.LambdaARN,
-		Consumer: repositories.JetstreamConsumer{
-			Stream:  newBinding.NatsStream,
-			Name:    newBinding.NatsConsumer,
-			Subject: newBinding.NatsSubjectPattern,
-		},
-		Batching:       nil,
-		AssignedPeerID: assignedPeerID,
+	var peers []peerRecord
+	if err := peerQuery.AllWithContext(ctx, &peers); err != nil {
+		return nil, err
 	}
 
-	if newBinding.Batching != nil {
-		resp.Batching = &repositories.BindingBatching{
-			MaxMessages: newBinding.Batching.MaxMessages,
-			MaxLatency:  newBinding.Batching.MaxLatency,
-		}
-	}
-
-	return resp, nil
+	return record.toJetstreamBinding(peers), nil
 }
 
 func (b *Bindings) GetJetstreamBinding(ctx context.Context, id uuid.UUID) (*repositories.JetstreamBinding, error) {
-	eg, ctx := errgroup.WithContext(ctx)
+	peerQuery := b.db.Table(b.tableName).
+		Get("pk", &peerPK{})
 
-	var (
-		peerIDs []string
-		binding *repositories.JetstreamBinding
-	)
+	bindingQuery := b.db.Table(b.tableName).
+		Get("pk", &jetstreamBindingPK{}).
+		Range("sk", dynamo.Equal, id.String())
 
-	eg.Go(func() error {
-		query := b.db.Table(b.tableName).
-			Get("pk", &peerPK{})
-
-		var peers []peerRecord
-		if err := query.AllWithContext(ctx, &peers); err != nil {
-			return err
-		}
-
-		for _, peer := range peers {
-			peerIDs = append(peerIDs, peer.ID.String())
-		}
-		return nil
-	})
-
-	eg.Go(func() error {
-		query := b.db.Table(b.tableName).
-			Get("pk", &jetstreamBindingPK{}).
-			Range("sk", dynamo.Equal, id)
-
-		var jetstreamBinding jetstreamBindingRecord
-		if err := query.OneWithContext(ctx, &jetstreamBinding); err != nil {
-			return err
-		}
-
-		binding = &repositories.JetstreamBinding{
-			ID:        jetstreamBinding.ID,
-			LambdaARN: jetstreamBinding.LambdaARN,
-			Consumer: repositories.JetstreamConsumer{
-				Stream:  jetstreamBinding.NatsStream,
-				Name:    jetstreamBinding.NatsConsumer,
-				Subject: jetstreamBinding.NatsSubjectPattern,
-			},
-			Batching: nil,
-		}
-
-		if jetstreamBinding.Batching == nil {
-			binding.Batching = &repositories.BindingBatching{
-				MaxMessages: jetstreamBinding.Batching.MaxMessages,
-				MaxLatency:  jetstreamBinding.Batching.MaxLatency,
-			}
-		}
-
-		return nil
-	})
-
-	if err := eg.Wait(); err != nil {
+	var peers []peerRecord
+	if err := peerQuery.AllWithContext(ctx, &peers); err != nil {
 		return nil, err
 	}
 
-	// Determine the assigned peer using rendezvous hashing
-	if len(peerIDs) > 0 {
-		h := rendezvous.NewHasher(rendezvous.WithMembers(peerIDs...))
-
-		assignedPeerID, err := uuid.Parse(h.Owner(binding.ID.String()))
-		if err != nil {
-			return nil, err
-		}
-
-		binding.AssignedPeerID = &assignedPeerID
+	var binding jetstreamBindingRecord
+	if err := bindingQuery.OneWithContext(ctx, &binding); err != nil {
+		return nil, err
 	}
 
-	return binding, nil
+	return binding.toJetstreamBinding(peers), nil
 }
 
 func (b *Bindings) ListJetstreamBindings(ctx context.Context) ([]repositories.JetstreamBinding, error) {
-	eg, ctx := errgroup.WithContext(ctx)
+	peerQuery := b.db.Table(b.tableName).
+		Get("pk", &peerPK{})
 
-	var (
-		peerIDs  []string
-		bindings []repositories.JetstreamBinding
-	)
+	bindingQuery := b.db.Table(b.tableName).
+		Get("pk", &jetstreamBindingPK{}).
+		Index("created_at-index")
 
-	eg.Go(func() error {
-		query := b.db.Table(b.tableName).
-			Get("pk", &peerPK{})
-
-		var peers []peerRecord
-		if err := query.AllWithContext(ctx, &peers); err != nil {
-			return err
-		}
-
-		for _, peer := range peers {
-			peerIDs = append(peerIDs, peer.ID.String())
-		}
-		return nil
-	})
-
-	eg.Go(func() error {
-		query := b.db.Table(b.tableName).
-			Get("pk", &jetstreamBindingPK{})
-
-		var jetstreamBindings []jetstreamBindingRecord
-		if err := query.AllWithContext(ctx, &jetstreamBindings); err != nil {
-			return err
-		}
-
-		for _, binding := range jetstreamBindings {
-			bindings = append(bindings, repositories.JetstreamBinding{
-				ID:        binding.ID,
-				LambdaARN: binding.LambdaARN,
-				Consumer: repositories.JetstreamConsumer{
-					Stream:  binding.NatsStream,
-					Name:    binding.NatsConsumer,
-					Subject: binding.NatsSubjectPattern,
-				},
-				Batching: &repositories.BindingBatching{
-					MaxMessages: binding.Batching.MaxMessages,
-					MaxLatency:  binding.Batching.MaxLatency,
-				},
-			})
-		}
-
-		return nil
-	})
-
-	if err := eg.Wait(); err != nil {
+	var peers []peerRecord
+	if err := peerQuery.AllWithContext(ctx, &peers); err != nil {
 		return nil, err
 	}
 
-	// Determine the assigned peer using rendezvous hashing
-	if len(peerIDs) > 0 {
-		h := rendezvous.NewHasher(rendezvous.WithMembers(peerIDs...))
-
-		for _, binding := range bindings {
-			assignedPeerID, err := uuid.Parse(h.Owner(binding.ID.String()))
-			if err != nil {
-				return nil, err
-			}
-
-			binding.AssignedPeerID = &assignedPeerID
-		}
+	var bindings jetstreamBindingRecords
+	if err := bindingQuery.AllWithContext(ctx, &bindings); err != nil {
+		return nil, err
 	}
 
-	return bindings, nil
+	return bindings.toJetstreamBindings(peers), nil
 }
 
 func (b *Bindings) DeleteJetstreamBinding(ctx context.Context, id uuid.UUID) error {

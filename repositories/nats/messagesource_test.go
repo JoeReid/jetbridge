@@ -45,17 +45,13 @@ func TestMessageSource_FetchJetstreamMessages(t *testing.T) {
 
 	t.Run("consumer not exist", func(t *testing.T) {
 		msgs, err := candidate.FetchJetstreamMessages(context.TODO(), repositories.JetstreamBinding{
-			ID:        id,
-			LambdaARN: "test-arn",
-			Consumer: repositories.JetstreamConsumer{
-				Stream:  "TESTSTREAM",
-				Name:    id.String(),
-				Subject: "TESTSTREAM.*",
-			},
-			Batching: &repositories.BindingBatching{
-				MaxMessages: 2,
-				MaxLatency:  time.Second,
-			},
+			ID:          id,
+			LambdaARN:   "test-arn",
+			Stream:      "TESTSTREAM",
+			Consumer:    id,
+			Subject:     "TESTSTREAM.*",
+			MaxMessages: 2,
+			MaxLatency:  time.Second,
 		})
 		assert.NoError(t, err)
 		assert.Len(t, msgs, 2)
@@ -67,17 +63,13 @@ func TestMessageSource_FetchJetstreamMessages(t *testing.T) {
 
 	t.Run("consumer exists", func(t *testing.T) {
 		msgs, err := candidate.FetchJetstreamMessages(context.TODO(), repositories.JetstreamBinding{
-			ID:        id,
-			LambdaARN: "test-arn",
-			Consumer: repositories.JetstreamConsumer{
-				Stream:  "TESTSTREAM",
-				Name:    id.String(),
-				Subject: "TESTSTREAM.*",
-			},
-			Batching: &repositories.BindingBatching{
-				MaxMessages: 2,
-				MaxLatency:  time.Second,
-			},
+			ID:          id,
+			LambdaARN:   "test-arn",
+			Stream:      "TESTSTREAM",
+			Consumer:    id,
+			Subject:     "TESTSTREAM.*",
+			MaxMessages: 2,
+			MaxLatency:  time.Second,
 		})
 		assert.NoError(t, err)
 		assert.Len(t, msgs, 2)

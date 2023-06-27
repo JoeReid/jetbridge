@@ -11,17 +11,34 @@ func Binding(binding *v1.JetstreamBinding) {
 }
 
 func Bindings(bindings []*v1.JetstreamBinding) {
-	tbl := table.New("ID", "Lambda ARN", "Stream", "Subject", "Max Messages", "Max Latency")
+	tbl := table.New("ID", "Lambda ARN", "Stream", "Subject", "Max Messages", "Max Latency", "Assigned Peer")
 
 	tbl.WithHeaderFormatter(color.New(color.FgGreen, color.Underline).SprintfFunc())
 	tbl.WithFirstColumnFormatter(color.New(color.FgYellow).SprintfFunc())
 
 	for _, binding := range bindings {
-		if binding.Batching != nil {
-			tbl.AddRow(binding.Id, binding.LambdaArn, binding.Consumer.Stream, binding.Consumer.Subject, binding.Batching.MaxMessages, binding.Batching.MaxLatency.AsDuration())
-			continue
+		vals := []interface{}{
+			binding.Id,
+			binding.LambdaArn,
+			binding.Stream,
+			binding.SubjectPattern,
 		}
-		tbl.AddRow(binding.Id, binding.LambdaArn, binding.Consumer.Stream, binding.Consumer.Subject, "-", "-")
+
+		if binding.MaxBatchSize == 0 {
+			vals = append(vals, "-")
+		} else {
+			vals = append(vals, binding.MaxBatchSize)
+		}
+
+		if binding.MaxBatchLatency.AsDuration() == 0 {
+			vals = append(vals, "-")
+		} else {
+			vals = append(vals, binding.MaxBatchLatency.AsDuration())
+		}
+
+		vals = append(vals, binding.AssignedPeer)
+
+		tbl.AddRow(vals...)
 	}
 	tbl.Print()
 }

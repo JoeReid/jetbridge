@@ -2,6 +2,10 @@ package server
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"strconv"
+	"time"
 
 	v1 "github.com/JoeReid/jetbridge/proto/gen/go/jetbridge/v1"
 	"github.com/JoeReid/jetbridge/proto/gen/go/jetbridge/v1/v1connect"
@@ -55,35 +59,59 @@ func (v *V1) CreateBinding(ctx context.Context, req *connect.Request[v1.CreateBi
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
-	var batching *repositories.BindingBatching
-	if req.Msg.Batching != nil {
-		batching = &repositories.BindingBatching{
-			MaxMessages: int(req.Msg.Batching.MaxMessages),
-			MaxLatency:  req.Msg.Batching.MaxLatency.AsDuration(),
-		}
+	var deliveryPolicy string
+	switch req.Msg.DeliveryPolicy.(type) {
+	case *v1.CreateBindingRequest_Policy:
+		deliveryPolicy = req.Msg.GetPolicy()
+	case *v1.CreateBindingRequest_StartTime:
+		deliveryPolicy = req.Msg.GetStartTime().AsTime().Format(time.RFC3339)
+	case *v1.CreateBindingRequest_StartSequence:
+		deliveryPolicy = fmt.Sprintf("%d", req.Msg.GetStartSequence())
+	default:
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid delivery policy"))
 	}
 
-	binding, err := v.Bindings.CreateJetstreamBinding(ctx, req.Msg.LambdaArn, req.Msg.Stream, req.Msg.SubjectPattern, batching)
+	binding, err := v.Bindings.CreateJetstreamBinding(ctx, &repositories.CreateJetstreamBinding{
+		LambdaARN:      req.Msg.LambdaArn,
+		Stream:         req.Msg.Stream,
+		Subject:        req.Msg.SubjectPattern,
+		MaxMessages:    int(req.Msg.MaxBatchSize),
+		MaxLatency:     req.Msg.MaxBatchLatency.AsDuration(),
+		DeliveryPolicy: deliveryPolicy,
+	})
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	v1Binding := &v1.JetstreamBinding{
-		Id:        binding.ID.String(),
-		LambdaArn: binding.LambdaARN,
-		Consumer: &v1.JetstreamConsumer{
-			Stream:  binding.Consumer.Stream,
-			Name:    binding.Consumer.Name,
-			Subject: binding.Consumer.Subject,
-		},
-		Batching: nil,
+		Id:              binding.ID.String(),
+		LambdaArn:       binding.LambdaARN,
+		Stream:          binding.Stream,
+		ConsumerName:    binding.Consumer.String(),
+		SubjectPattern:  binding.Subject,
+		MaxBatchSize:    int64(binding.MaxMessages),
+		MaxBatchLatency: durationpb.New(binding.MaxLatency),
 	}
 
-	if binding.Batching != nil {
-		v1Binding.Batching = &v1.BindingBatching{
-			MaxMessages: int64(binding.Batching.MaxMessages),
-			MaxLatency:  durationpb.New(binding.Batching.MaxLatency),
+	switch req.Msg.DeliveryPolicy.(type) {
+	case *v1.CreateBindingRequest_Policy:
+		v1Binding.DeliveryPolicy = &v1.JetstreamBinding_Policy{
+			Policy: req.Msg.GetPolicy(),
 		}
+	case *v1.CreateBindingRequest_StartTime:
+		v1Binding.DeliveryPolicy = &v1.JetstreamBinding_StartTime{
+			StartTime: req.Msg.GetStartTime(),
+		}
+	case *v1.CreateBindingRequest_StartSequence:
+		v1Binding.DeliveryPolicy = &v1.JetstreamBinding_StartSequence{
+			StartSequence: req.Msg.GetStartSequence(),
+		}
+	default:
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid delivery policy"))
+	}
+
+	if binding.AssignedPeerID != nil {
+		v1Binding.AssignedPeer = binding.AssignedPeerID.String()
 	}
 
 	return connect.NewResponse(&v1.CreateBindingResponse{Binding: v1Binding}), nil
@@ -105,21 +133,39 @@ func (v *V1) GetBinding(ctx context.Context, req *connect.Request[v1.GetBindingR
 	}
 
 	v1Binding := &v1.JetstreamBinding{
-		Id:        binding.ID.String(),
-		LambdaArn: binding.LambdaARN,
-		Consumer: &v1.JetstreamConsumer{
-			Stream:  binding.Consumer.Stream,
-			Name:    binding.Consumer.Name,
-			Subject: binding.Consumer.Subject,
-		},
-		Batching: nil,
+		Id:              binding.ID.String(),
+		LambdaArn:       binding.LambdaARN,
+		Stream:          binding.Stream,
+		ConsumerName:    binding.Consumer.String(),
+		SubjectPattern:  binding.Subject,
+		MaxBatchSize:    int64(binding.MaxMessages),
+		MaxBatchLatency: durationpb.New(binding.MaxLatency),
 	}
 
-	if binding.Batching == nil {
-		v1Binding.Batching = &v1.BindingBatching{
-			MaxMessages: int64(binding.Batching.MaxMessages),
-			MaxLatency:  durationpb.New(binding.Batching.MaxLatency),
+	switch binding.DeliveryPolicy {
+	case "all", "last", "last-per-subject", "new":
+		v1Binding.DeliveryPolicy = &v1.JetstreamBinding_Policy{
+			Policy: binding.DeliveryPolicy,
 		}
+
+	default:
+		if t, err := time.Parse(time.RFC3339, binding.DeliveryPolicy); err == nil {
+			v1Binding.DeliveryPolicy = &v1.JetstreamBinding_StartTime{
+				StartTime: timestamppb.New(t),
+			}
+		}
+
+		if i, err := strconv.ParseUint(binding.DeliveryPolicy, 10, 64); err == nil {
+			v1Binding.DeliveryPolicy = &v1.JetstreamBinding_StartSequence{
+				StartSequence: i,
+			}
+		}
+
+		return nil, connect.NewError(connect.CodeInternal, errors.New("invalid delivery policy"))
+	}
+
+	if binding.AssignedPeerID != nil {
+		v1Binding.AssignedPeer = binding.AssignedPeerID.String()
 	}
 
 	return connect.NewResponse(&v1.GetBindingResponse{Binding: v1Binding}), nil
@@ -137,24 +183,43 @@ func (v *V1) ListBindings(ctx context.Context, req *connect.Request[v1.ListBindi
 
 	var v1Bindings []*v1.JetstreamBinding
 	for _, binding := range bindings {
-		var batching *v1.BindingBatching
-		if binding.Batching != nil {
-			batching = &v1.BindingBatching{
-				MaxMessages: int64(binding.Batching.MaxMessages),
-				MaxLatency:  durationpb.New(binding.Batching.MaxLatency),
-			}
+		v1Binding := &v1.JetstreamBinding{
+			Id:              binding.ID.String(),
+			LambdaArn:       binding.LambdaARN,
+			Stream:          binding.Stream,
+			ConsumerName:    binding.Consumer.String(),
+			SubjectPattern:  binding.Subject,
+			MaxBatchSize:    int64(binding.MaxMessages),
+			MaxBatchLatency: durationpb.New(binding.MaxLatency),
 		}
 
-		v1Bindings = append(v1Bindings, &v1.JetstreamBinding{
-			Id:        binding.ID.String(),
-			LambdaArn: binding.LambdaARN,
-			Consumer: &v1.JetstreamConsumer{
-				Stream:  binding.Consumer.Stream,
-				Name:    binding.Consumer.Name,
-				Subject: binding.Consumer.Subject,
-			},
-			Batching: batching,
-		})
+		switch binding.DeliveryPolicy {
+		case "all", "last", "last-per-subject", "new":
+			v1Binding.DeliveryPolicy = &v1.JetstreamBinding_Policy{
+				Policy: binding.DeliveryPolicy,
+			}
+
+		default:
+			if t, err := time.Parse(time.RFC3339, binding.DeliveryPolicy); err == nil {
+				v1Binding.DeliveryPolicy = &v1.JetstreamBinding_StartTime{
+					StartTime: timestamppb.New(t),
+				}
+			}
+
+			if i, err := strconv.ParseUint(binding.DeliveryPolicy, 10, 64); err == nil {
+				v1Binding.DeliveryPolicy = &v1.JetstreamBinding_StartSequence{
+					StartSequence: i,
+				}
+			}
+
+			return nil, connect.NewError(connect.CodeInternal, errors.New("invalid delivery policy"))
+		}
+
+		if binding.AssignedPeerID != nil {
+			v1Binding.AssignedPeer = binding.AssignedPeerID.String()
+		}
+
+		v1Bindings = append(v1Bindings, v1Binding)
 	}
 
 	resp := connect.NewResponse(&v1.ListBindingsResponse{Bindings: v1Bindings})

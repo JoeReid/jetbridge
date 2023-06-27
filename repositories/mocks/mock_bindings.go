@@ -37,18 +37,18 @@ func (m *MockBindings) EXPECT() *MockBindingsMockRecorder {
 }
 
 // CreateJetstreamBinding mocks base method.
-func (m *MockBindings) CreateJetstreamBinding(arg0 context.Context, arg1, arg2, arg3 string, arg4 *repositories.BindingBatching) (*repositories.JetstreamBinding, error) {
+func (m *MockBindings) CreateJetstreamBinding(arg0 context.Context, arg1 *repositories.CreateJetstreamBinding) (*repositories.JetstreamBinding, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateJetstreamBinding", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "CreateJetstreamBinding", arg0, arg1)
 	ret0, _ := ret[0].(*repositories.JetstreamBinding)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateJetstreamBinding indicates an expected call of CreateJetstreamBinding.
-func (mr *MockBindingsMockRecorder) CreateJetstreamBinding(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+func (mr *MockBindingsMockRecorder) CreateJetstreamBinding(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateJetstreamBinding", reflect.TypeOf((*MockBindings)(nil).CreateJetstreamBinding), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateJetstreamBinding", reflect.TypeOf((*MockBindings)(nil).CreateJetstreamBinding), arg0, arg1)
 }
 
 // DeleteJetstreamBinding mocks base method.

@@ -30,9 +30,10 @@ services:
       dockerfile: Dockerfile.server
     command: ["create-table"]
     environment:
-      - DYNAMO_ENDPOINT=http://dynamodb:8000
+      - AWS_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=testUser
       - AWS_SECRET_ACCESS_KEY=testAccessKey
+      - DYNAMO_ENDPOINT=http://dynamodb:8000
     depends_on:
       dynamodb:
         condition: service_started
@@ -43,6 +44,7 @@ services:
       dockerfile: Dockerfile.server
     command: ["serve"]
     environment:
+      - AWS_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=testUser
       - AWS_SECRET_ACCESS_KEY=testAccessKey
       - NATS_URL=nats://nats:4222

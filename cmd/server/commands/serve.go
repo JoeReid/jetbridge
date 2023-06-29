@@ -13,7 +13,6 @@ import (
 	natsrepo "github.com/JoeReid/jetbridge/repositories/nats"
 	"github.com/JoeReid/jetbridge/server"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/bufbuild/connect-go"
@@ -40,9 +39,6 @@ var ServeCommand = &cli.Command{
 			Value:       "nats://localhost:4222",
 			Destination: &natsUrl,
 		},
-		awsRegionFlag,
-		awsAccessKeyIDFlag,
-		awsSecretAccessKeyFlag,
 		dynamoEndpointFlag,
 		dynamoTableFlag,
 		lambdaEndpointFlag,
@@ -71,13 +67,7 @@ var ServeCommand = &cli.Command{
 			return err
 		}
 
-		awsConfig := &aws.Config{
-			Region:      &awsRegion,
-			Endpoint:    &dynamoEndpoint,
-			Credentials: credentials.NewStaticCredentials(awsAccessKeyID, awsSecretAccessKey, ""),
-		}
-
-		dynamoSvc := dynamo.New(awsSession, awsConfig)
+		dynamoSvc := dynamo.New(awsSession, aws.NewConfig().WithEndpoint(dynamoEndpoint))
 
 		bindings, err := dynamorepo.NewBindings(dynamoSvc, dynamoTable)
 		if err != nil {
@@ -89,7 +79,7 @@ var ServeCommand = &cli.Command{
 			return err
 		}
 
-		lambdaSvc := lambda.New(awsSession, awsConfig)
+		lambdaSvc := lambda.New(awsSession, aws.NewConfig().WithEndpoint(lambdaEndpoint))
 
 		eg, ctx := errgroup.WithContext(c.Context)
 

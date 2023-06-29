@@ -3,42 +3,6 @@ package commands
 import "github.com/urfave/cli/v2"
 
 var (
-	awsRegion string
-
-	awsRegionFlag = &cli.StringFlag{
-		Name:        "aws-region",
-		EnvVars:     []string{"AWS_REGION"},
-		Usage:       "The AWS region to use for Lambda",
-		Value:       "us-east-1",
-		Destination: &awsRegion,
-	}
-)
-
-var (
-	awsAccessKeyID string
-
-	awsAccessKeyIDFlag = &cli.StringFlag{
-		Name:        "aws-access-key-id",
-		EnvVars:     []string{"AWS_ACCESS_KEY_ID"},
-		Usage:       "The AWS access key ID to use for AWS",
-		Required:    true,
-		Destination: &awsAccessKeyID,
-	}
-)
-
-var (
-	awsSecretAccessKey string
-
-	awsSecretAccessKeyFlag = &cli.StringFlag{
-		Name:        "aws-secret-access-key",
-		EnvVars:     []string{"AWS_SECRET_ACCESS_KEY"},
-		Usage:       "The AWS secret access key to use for AWS",
-		Required:    true,
-		Destination: &awsSecretAccessKey,
-	}
-)
-
-var (
 	dynamoEndpoint string
 
 	dynamoEndpointFlag = &cli.StringFlag{

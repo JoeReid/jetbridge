@@ -1,4 +1,4 @@
-FROM golang:latest AS builder
+FROM golang:latest AS base
 WORKDIR /app
 ADD . .
 RUN go mod download
@@ -11,6 +11,6 @@ COPY --from=base /etc/passwd /etc/passwd
 COPY --from=base /etc/group /etc/group
 USER small-user:small-user
 
-COPY --from=builder /app/main /app/main
+COPY --from=base /app/main /app/main
 WORKDIR /app
 ENTRYPOINT [ "/app/main" ]

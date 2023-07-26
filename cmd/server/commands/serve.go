@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/bufbuild/connect-go"
+	grpchealth "github.com/bufbuild/connect-grpchealth-go"
 	"github.com/google/uuid"
 	"github.com/guregu/dynamo"
 	"github.com/nats-io/nats.go"
@@ -90,6 +91,8 @@ var ServeCommand = &cli.Command{
 				Bindings: bindings,
 				Peers:    peers,
 			}, connect.WithInterceptors(connect.UnaryInterceptorFunc(server.LoggingInterceptor))))
+
+			mux.Handle(grpchealth.NewHandler(grpchealth.NewStaticChecker(v1connect.JetbridgeServiceName)))
 
 			server := &http.Server{
 				Addr:    fmt.Sprintf(":%d", httpPort),

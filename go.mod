@@ -7,6 +7,7 @@ require (
 	github.com/aws/aws-lambda-go v1.41.0
 	github.com/aws/aws-sdk-go v1.44.223
 	github.com/bufbuild/connect-go v1.8.0
+	github.com/bufbuild/connect-grpchealth-go v1.1.1
 	github.com/envoyproxy/protoc-gen-validate v1.0.1
 	github.com/fatih/color v1.15.0
 	github.com/golang/mock v1.6.0

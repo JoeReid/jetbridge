@@ -82,7 +82,7 @@ func (m *MessageSource) subscription(ctx context.Context, binding repositories.J
 		AckPolicy:         nats.AckAllPolicy,
 		AckWait:           time.Minute, // TODO: does this need exposing in the binding? Can we infer it from lambda timeout?
 		MaxDeliver:        -1,          // TODO: does this need exposing in the binding?
-		FilterSubject:     "",          // TODO: this really needs exposing in the binding
+		FilterSubject:     binding.Subject,
 		ReplayPolicy:      nats.ReplayInstantPolicy,
 		MaxWaiting:        1, // Only one worker should be processing a message at a time (in most cases), we may as well ask NATS to enforce this
 		MaxAckPending:     1,

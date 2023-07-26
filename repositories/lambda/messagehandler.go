@@ -80,6 +80,13 @@ func (m *MessageHandler) HandleJetstreamMessages(ctx context.Context, binding re
 
 			continue
 		}
+
+		if err := message.Ack(); err != nil {
+			m.logger.Error("failed to ACK message", zap.Error(err))
+			rtnErr = err
+
+			continue
+		}
 	}
 
 	return rtnErr

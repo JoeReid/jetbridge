@@ -28,7 +28,8 @@ func (b *Bindings) CreateJetstreamBinding(ctx context.Context, create *repositor
 		If("attribute_not_exists(pk)")
 
 	peerQuery := b.db.Table(b.tableName).
-		Get("pk", &peerPK{})
+		Get("pk", &peerPK{}).
+		Filter("delete_after > ?", time.Now())
 
 	if err := createQuery.RunWithContext(ctx); err != nil {
 		return nil, fmt.Errorf("failed to create jetstream binding: %w", err)
@@ -44,7 +45,8 @@ func (b *Bindings) CreateJetstreamBinding(ctx context.Context, create *repositor
 
 func (b *Bindings) GetJetstreamBinding(ctx context.Context, id uuid.UUID) (*repositories.JetstreamBinding, error) {
 	peerQuery := b.db.Table(b.tableName).
-		Get("pk", &peerPK{})
+		Get("pk", &peerPK{}).
+		Filter("delete_after > ?", time.Now())
 
 	bindingQuery := b.db.Table(b.tableName).
 		Get("pk", &jetstreamBindingPK{}).
@@ -65,7 +67,8 @@ func (b *Bindings) GetJetstreamBinding(ctx context.Context, id uuid.UUID) (*repo
 
 func (b *Bindings) ListJetstreamBindings(ctx context.Context) ([]repositories.JetstreamBinding, error) {
 	peerQuery := b.db.Table(b.tableName).
-		Get("pk", &peerPK{})
+		Get("pk", &peerPK{}).
+		Filter("delete_after > ?", time.Now())
 
 	bindingQuery := b.db.Table(b.tableName).
 		Get("pk", &jetstreamBindingPK{}).

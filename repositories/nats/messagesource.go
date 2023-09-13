@@ -76,7 +76,7 @@ func (m *MessageSource) subscription(ctx context.Context, binding repositories.J
 
 	desiredConfig := &nats.ConsumerConfig{
 		Durable:           binding.Consumer.String(),
-		Name:              "",
+		Name:              binding.Consumer.String(),
 		Description:       fmt.Sprintf("JetBridge Lambda consumer for %s", binding.LambdaARN),
 		DeliverPolicy:     nats.DeliverAllPolicy, // TODO: does this need exposing in the binding?
 		AckPolicy:         nats.AckAllPolicy,

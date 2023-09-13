@@ -114,7 +114,7 @@ func (m *MessageSource) subscription(ctx context.Context, binding repositories.J
 		return nil, fmt.Errorf("failed to get consumer info: %w", err)
 
 	default:
-		if diff := deep.Equal(info.Config, desiredConfig); diff != nil {
+		if diff := deep.Equal(info.Config, *desiredConfig); diff != nil {
 			log.Printf("consumer info does not match binding: %v", diff)
 			return nil, errors.New("consumer info does not match binding")
 		}

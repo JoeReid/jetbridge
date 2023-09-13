@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"reflect"
 	"sync"
 	"time"
 
 	"github.com/JoeReid/jetbridge"
 	"github.com/JoeReid/jetbridge/repositories"
+	"github.com/go-test/deep"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 )
@@ -114,7 +114,8 @@ func (m *MessageSource) subscription(ctx context.Context, binding repositories.J
 		return nil, fmt.Errorf("failed to get consumer info: %w", err)
 
 	default:
-		if !reflect.DeepEqual(info.Config, *desiredConfig) {
+		if diff := deep.Equal(info.Config, desiredConfig); diff != nil {
+			log.Printf("consumer info does not match binding: %v", diff)
 			return nil, errors.New("consumer info does not match binding")
 		}
 	}

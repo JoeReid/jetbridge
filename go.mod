@@ -10,6 +10,7 @@ require (
 	github.com/bufbuild/connect-grpchealth-go v1.1.1
 	github.com/envoyproxy/protoc-gen-validate v1.0.1
 	github.com/fatih/color v1.15.0
+	github.com/go-test/deep v1.1.0
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
 	github.com/guregu/dynamo v1.19.0

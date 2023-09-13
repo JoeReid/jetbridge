@@ -115,8 +115,10 @@ func (m *MessageSource) subscription(ctx context.Context, binding repositories.J
 
 	default:
 		if diff := deep.Equal(info.Config, *desiredConfig); diff != nil {
-			log.Printf("consumer info does not match binding: %v", diff)
-			return nil, errors.New("consumer info does not match binding")
+			return nil, fmt.Errorf(
+				"consumer config (%s:%s) does not match desired config: %s",
+				binding.Stream, binding.Consumer.String(), diff,
+			)
 		}
 	}
 
